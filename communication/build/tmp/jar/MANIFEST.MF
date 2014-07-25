@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Export-Package: com.github.ros_robocook.communication;version="0.1.0";
+ uses:="org.ros.namespace,org.ros.node"
+Bundle-Version: 0.1.0
+Tool: Bnd-2.1.0.20130426-122213
+Bundle-Name: communication
+Bnd-LastModified: 1406323513000
+Created-By: 1.7.0_51 (Oracle Corporation)
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: com.github.rosjava.ros_robocook.communication
+Import-Package: burlap.oomdp.core,edu.brown.cs.h2r.baking,geometry_msg
+ s;version="[1.10,2)",object_recognition_msgs;version="[0.3,1)",org.ap
+ ache.commons.logging;version="[1.1,2)",org.ros.concurrent,org.ros.mes
+ sage,org.ros.namespace,org.ros.node,org.ros.node.topic
+
