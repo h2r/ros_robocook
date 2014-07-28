@@ -31,6 +31,8 @@ import object_recognition_msgs.GetObjectInformation.*;
 import edu.brown.cs.h2r.baking.*;
 import burlap.oomdp.core.*;
 
+import move_msgs.RobotAction;
+
 import java.util.*;
 
 
@@ -89,10 +91,55 @@ public class Pubsub extends AbstractNodeMain {
 
          System.out.println(state.toString());
          kitchen.plan();
+         String actionParams = kitchen.getNextActionParams();
+         RobotAction actionMsg = this.getRobotAction(actionParams);
+         actionPublisher.publish(actionMsg);
       }
      }
 
     });
+  }
+
+  public RobotAction getRobotAction(String[] actionParams)
+  {
+    String action = actionParams[0];
+    RobotAction actionMsg = new RobotAction();
+    if (action == "move")
+    {
+      actionMsg.setType(RobotAction.MOVE);
+      moveAction moveMsg = new moveAction();
+
+      moveRegion regionMsg = this.getMoveRegion(actionParams[2]);
+      moveObject objectMsg = new moveObject();
+      objectMsg.setName(actionParams[1]);
+      moveMsg.setObject(objectMsg);
+      moveMsg.setRegion(regionMsg);
+      actionMsg.setMoveAction(moveMsg);
+    }
+
+    return actionMsg;
+  }
+
+  public moveRegion getMoveRegion(String region)
+  {
+    moveRegion region = region_maker.newMessage();
+    region.setName(region_name);
+    region.setShape(region.SHAPE_CIRCLE);
+    
+    Point origin = point_maker.newMessage();
+    origin.setX(region_obj.getRealValForAttribute("top"));
+    origin.setY(region_obj.getRealValForAttribute("left"));
+    origin.setZ(region_obj.getRealValForAttribute("height"));
+    region.setOrigin(origin);
+
+
+    Vector3 scale = vector3_maker.newMessage();
+    scale.setX(0.333);
+    scale.setY(0.333);
+    scale.setZ(0.2);  
+    region.setScale(scale);
+
+    return region;
   }
 
   public boolean getInitialized() {
