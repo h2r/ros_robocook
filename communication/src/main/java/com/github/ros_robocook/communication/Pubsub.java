@@ -17,21 +17,31 @@
 package com.github.ros_robocook.communication;
 
 import org.apache.commons.logging.Log;
+import org.ros.internal.message.DefaultMessageFactory;
+import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
+import org.ros.node.service.ServiceClient;
 import org.ros.node.topic.Subscriber;
 
 
 import object_recognition_msgs.*;
 import object_recognition_msgs.GetObjectInformation.*;
 
-import edu.brown.cs.h2r.baking.*;
+import geometry_msgs.Vector3;
+import geometry_msgs.Point;
+
+import edu.brown.cs.h2r.baking.KitchenDomain;
 import burlap.oomdp.core.*;
 
-import move_msgs.RobotAction;
+import baxter_action_server.RobotAction;
+
+import move_msgs.moveAction;
+import move_msgs.moveRegion;
+import move_msgs.moveObject;
 
 import java.util.*;
 
@@ -41,6 +51,8 @@ import java.util.*;
  */
 public class Pubsub extends AbstractNodeMain {
   private boolean initialized;
+  private State currentState;
+  MessageFactory messageFactory;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -51,8 +63,10 @@ public class Pubsub extends AbstractNodeMain {
   public void onStart(ConnectedNode connectedNode) {
      final Log log = connectedNode.getLog();
      final KitchenDomain kitchen = new KitchenDomain();
+     this.messageFactory = connectedNode.getTopicMessageFactory();
      //kitchen.setDebug(true);
      this.setInitializedFalse();
+     //ServiceClient<BaxterActionGoal, BaxterActionResponse> client = connectedNode.newServiceClient("/baxter_action", BaxterAction);
      Subscriber<RecognizedObjectArray> subscriber = connectedNode.newSubscriber("/chatter", RecognizedObjectArray._TYPE);
 
 
@@ -85,15 +99,20 @@ public class Pubsub extends AbstractNodeMain {
           // add object
           kitchen.addObject(name, x, y, z);
          }
+
          State state = kitchen.getCurrentState();
+         if (!state.equals(Pubsub.this.currentState))
+         {
+            Pubsub.this.currentState = state;
+            kitchen.plan();
+            String actionParams = kitchen.getNextActionParams();
+            RobotAction actionMsg = Pubsub.this.getRobotAction(actionParams);
+            Pubsub.this.actionPublisher.publish(actionMsg);
+         }
 
          Pubsub.this.setInitialized();
 
          System.out.println(state.toString());
-         kitchen.plan();
-         String actionParams = kitchen.getNextActionParams();
-         RobotAction actionMsg = this.getRobotAction(actionParams);
-         actionPublisher.publish(actionMsg);
       }
      }
 
@@ -103,14 +122,14 @@ public class Pubsub extends AbstractNodeMain {
   public RobotAction getRobotAction(String[] actionParams)
   {
     String action = actionParams[0];
-    RobotAction actionMsg = new RobotAction();
+    RobotAction actionMsg = this.messageFactory.newFromType(RobotAction._TYPE);
     if (action == "move")
     {
       actionMsg.setType(RobotAction.MOVE);
-      moveAction moveMsg = new moveAction();
+      moveAction moveMsg = this.messageFactory.newFromType(moveAction._TYPE);
 
       moveRegion regionMsg = this.getMoveRegion(actionParams[2]);
-      moveObject objectMsg = new moveObject();
+      moveObject objectMsg = this.messageFactory.newFromType(moveObject._TYPE);
       objectMsg.setName(actionParams[1]);
       moveMsg.setObject(objectMsg);
       moveMsg.setRegion(regionMsg);
@@ -122,18 +141,18 @@ public class Pubsub extends AbstractNodeMain {
 
   public moveRegion getMoveRegion(String region)
   {
-    moveRegion region = region_maker.newMessage();
-    region.setName(region_name);
-    region.setShape(region.SHAPE_CIRCLE);
+    moveRegion region = this.messageFactory.newFromType(moveRegion._TYPE);
+    region.setName(region);
+    region.setShape(moveRegion.SHAPE_CIRCLE);
     
-    Point origin = point_maker.newMessage();
-    origin.setX(region_obj.getRealValForAttribute("top"));
-    origin.setY(region_obj.getRealValForAttribute("left"));
-    origin.setZ(region_obj.getRealValForAttribute("height"));
+    Point origin = this.messageFactory.newFromType(Point._TYPE);
+    origin.setX(1.0);
+    origin.setY(1.0);
+    origin.setZ(0.0);
     region.setOrigin(origin);
 
 
-    Vector3 scale = vector3_maker.newMessage();
+    Vector3 scale = this.messageFactory.newFromType(Vector3._TYPE);
     scale.setX(0.333);
     scale.setY(0.333);
     scale.setZ(0.2);  

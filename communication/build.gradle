@@ -34,5 +34,6 @@ dependencies {
   compile files('build/libs/snakeyaml-1.13.jar')
   compile 'org.ros.rosjava_messages:object_recognition_msgs:0.3.19'
   compile 'org.ros.rosjava_messages:geometry_msgs:1.10.2'
+  compile 'com.github.rosjava.move_msgs_generator:move_msgs:0.1.0'
 }
 
