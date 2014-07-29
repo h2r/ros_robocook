@@ -30,7 +30,7 @@ dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.1,)'
   compile files('build/libs/burlap.jar')
-  compile files('build/libs/RosBaking.jar')
+  compile files('build/libs/h2r-baking.jar')
   compile files('build/libs/snakeyaml-1.13.jar')
   compile 'org.ros.rosjava_messages:object_recognition_msgs:0.3.19'
   compile 'org.ros.rosjava_messages:geometry_msgs:1.10.2'
