@@ -9,7 +9,7 @@ project(ros_robocook)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rosjava_build_tools)
+find_package(catkin REQUIRED rosjava_build_tools move_msgs geometry_msgs object_recognition_msgs)
 
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)

@@ -25,6 +25,7 @@ import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
 import org.ros.node.service.ServiceClient;
+import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
 
@@ -37,11 +38,10 @@ import geometry_msgs.Point;
 import edu.brown.cs.h2r.baking.KitchenDomain;
 import burlap.oomdp.core.*;
 
-import baxter_action_server.RobotAction;
-
-import move_msgs.moveAction;
-import move_msgs.moveRegion;
-import move_msgs.moveObject;
+import move_msgs.MoveAction;
+import move_msgs.MoveRegion;
+import move_msgs.MoveObject;
+import move_msgs.BaxterAction;
 
 import java.util.*;
 
@@ -53,6 +53,7 @@ public class Pubsub extends AbstractNodeMain {
   private boolean initialized;
   private State currentState;
   MessageFactory messageFactory;
+  Publisher<BaxterAction> actionPublisher;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -66,7 +67,7 @@ public class Pubsub extends AbstractNodeMain {
      this.messageFactory = connectedNode.getTopicMessageFactory();
      //kitchen.setDebug(true);
      this.setInitializedFalse();
-     //ServiceClient<BaxterActionGoal, BaxterActionResponse> client = connectedNode.newServiceClient("/baxter_action", BaxterAction);
+     this.actionPublisher = connectedNode.newPublisher("/baxter_action", BaxterAction._TYPE);
      Subscriber<RecognizedObjectArray> subscriber = connectedNode.newSubscriber("/chatter", RecognizedObjectArray._TYPE);
 
 
@@ -105,8 +106,8 @@ public class Pubsub extends AbstractNodeMain {
          {
             Pubsub.this.currentState = state;
             kitchen.plan();
-            String actionParams = kitchen.getNextActionParams();
-            RobotAction actionMsg = Pubsub.this.getRobotAction(actionParams);
+            String[] actionParams = kitchen.getRobotActionParams();
+            BaxterAction actionMsg = Pubsub.this.getRobotAction(actionParams);
             Pubsub.this.actionPublisher.publish(actionMsg);
          }
 
@@ -119,17 +120,17 @@ public class Pubsub extends AbstractNodeMain {
     });
   }
 
-  public RobotAction getRobotAction(String[] actionParams)
+  public BaxterAction getRobotAction(String[] actionParams)
   {
     String action = actionParams[0];
-    RobotAction actionMsg = this.messageFactory.newFromType(RobotAction._TYPE);
+    BaxterAction actionMsg = this.messageFactory.newFromType(BaxterAction._TYPE);
     if (action == "move")
     {
-      actionMsg.setType(RobotAction.MOVE);
-      moveAction moveMsg = this.messageFactory.newFromType(moveAction._TYPE);
+      actionMsg.setType(BaxterAction.MOVE);
+      MoveAction moveMsg = this.messageFactory.newFromType(MoveAction._TYPE);
 
-      moveRegion regionMsg = this.getMoveRegion(actionParams[2]);
-      moveObject objectMsg = this.messageFactory.newFromType(moveObject._TYPE);
+      MoveRegion regionMsg = this.getMoveRegion(actionParams[2]);
+      MoveObject objectMsg = this.messageFactory.newFromType(MoveObject._TYPE);
       objectMsg.setName(actionParams[1]);
       moveMsg.setObject(objectMsg);
       moveMsg.setRegion(regionMsg);
@@ -139,11 +140,11 @@ public class Pubsub extends AbstractNodeMain {
     return actionMsg;
   }
 
-  public moveRegion getMoveRegion(String region)
+  public MoveRegion getMoveRegion(String regionName)
   {
-    moveRegion region = this.messageFactory.newFromType(moveRegion._TYPE);
-    region.setName(region);
-    region.setShape(moveRegion.SHAPE_CIRCLE);
+    MoveRegion region = this.messageFactory.newFromType(MoveRegion._TYPE);
+    region.setName(regionName);
+    region.setShape(MoveRegion.SHAPE_CIRCLE);
     
     Point origin = this.messageFactory.newFromType(Point._TYPE);
     origin.setX(1.0);

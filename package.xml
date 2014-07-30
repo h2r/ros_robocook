@@ -41,6 +41,10 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rosjava_build_tools</build_depend>
+  <build_depend>move_msgs></build_depend>
+  <build_depend>object_recognition_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>baxter_action_msgs</build_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
